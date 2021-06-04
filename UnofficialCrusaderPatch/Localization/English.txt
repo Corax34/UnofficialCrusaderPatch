@@ -1,4 +1,18 @@
 // ======================
+//         This Is Fine
+// ======================
+
+o_random_tile_fire
+{
+"Sets random tiles on fire"
+}
+
+o_random_tile_fire_descr
+{
+"Sets random tiles on fire"
+}
+
+// ======================
 //         2.15
 // ======================
 u_spearmen_run
