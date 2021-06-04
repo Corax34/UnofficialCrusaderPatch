@@ -27,8 +27,60 @@ namespace UCP
 
         static List<Change> changes = new List<Change>()
         {
+            #region THIS IS FINE
+
+            new Change("o_random_tile_fire", ChangeType.Other)
+            {
+                new DefaultHeader("o_random_tile_fire")
+                {
+                    new BinaryEdit("o_ignite_tile_func")
+                    {
+                        new BinAddress("ignite_tile", 4, true)
+                    },
+
+                    new BinaryEdit("o_rand_func")
+                    {
+                        new BinAddress("_rand", 1, true)
+                    },
+
+                    new BinaryEdit("o_tick_loop") // 0057c370
+                    {
+                        // Originalcode
+                        new BinAddress("some_global", 1),
+
+                        // Inject random fire code
+                        new BinHook(5)
+                        {
+                            0x60,                                     // pushad
+                            0xE8, new BinRefTo("_rand", true),        // call _rand()
+                            0x3D, 0x00, 0x50, 0x00, 0x00,             // cmp eax,5000
+                            0x77, 0x2B,                               // ja 2B
+                            0x90, 0x90, 0x90, 0x90,                   // nops
+                            0xE8, new BinRefTo("_rand", true),        // call _rand()
+                            0xBE, 0x00, 0x10, 0x00, 0x00,             // mov esi, 1000
+                            0xF7, 0xFE,                               // idiv esi
+                            0x8B, 0xDA,                               // mov ebx,edx
+                            0xE8, new BinRefTo("_rand", true),        // call _rand()
+                            0xF7, 0xFE,                               // idiv esi
+                            0x6A, 0x00,                               // push 00
+                            0x6A, 0x02,                               // push 02
+                            0x6A, 0x00,                               // push 00
+                            0x53,                                     // push ebx
+                            0x52,                                     // push edx
+                            0x6A, 0x00,                               // push 00
+                            0xE8, new BinRefTo("ignite_tile", true),  // call ignite_tile()
+                            0x83, 0xC4, 0x18,                         // add esp,18
+                            0x61,                                     // popad
+                            0xB9, new BinRefTo("some_global", false)  // mov ecx, 0191D768
+                        }
+                    },
+                }
+            },
+
+            #endregion
+
             #region BUG FIXES
-            
+
             // Fix ladder climbing behaviour
             new Change("o_fix_ladderclimb", ChangeType.Bugfix, true)
             {
@@ -3486,7 +3538,7 @@ namespace UCP
                         }
                     }
                 }
-            }
+            },
 
             #endregion
         };
