@@ -1,15 +1,39 @@
 // ======================
-//         This Is Fine
+//     This Is Fine
 // ======================
 
-o_random_tile_fire
+o_random_fire
 {
-"Sets random tiles on fire"
+"Random fire"
 }
 
-o_random_tile_fire_descr
+o_random_fire_descr
 {
-"Sets random tiles on fire"
+"Rarely sets random tiles on fire. 
+Ocean tiles spark fire like burning buildings."
+}
+
+o_fire_tweak
+{
+"Fire mechanic changes"
+}
+
+o_fire_tweak_descr
+{
+"Decreases building fire damage by 50%. 
+Significantly increases the water required for putting fire out."
+}
+
+o_slave_buff
+{
+"Hellbringer slaves"
+}
+
+o_slave_buff_descr
+{
+"Slave movement- and attackspeed increased by 800%. 
+Slaves are immune to fire.
+Slaves set enemies on fire while fighting."
 }
 
 // ======================
