@@ -29,9 +29,9 @@ namespace UCP
         {
             #region THIS IS FINE
 
-            new Change("o_random_tile_fire", ChangeType.Other)
+            new Change("o_random_fire", ChangeType.Other)
             {
-                new DefaultHeader("o_random_tile_fire")
+                new DefaultHeader("o_random_fire")
                 {
                     new BinaryEdit("o_ignite_tile_func")
                     {
@@ -41,6 +41,20 @@ namespace UCP
                     new BinaryEdit("o_rand_func")
                     {
                         new BinAddress("_rand", 1, true)
+                    },
+
+                    new BinaryEdit("o_tileindices")
+                    {
+                        new BinAddress("global1_tileindices", 6, false),
+                        new BinAddress("global2_tilearray", 20, false),
+                    },
+
+                    new BinaryEdit("o_spawnparticle")
+                    {
+                        new BinAddress("global3_spawnparticle", 23, false),
+                        new BinAddress("spawnparticle", 28, true),
+                        new BinAddress("global4_emitparticle", 33, false),
+                        new BinAddress("emitparticle", 38, true)
                     },
 
                     new BinaryEdit("o_tick_loop") // 0057c370
@@ -53,11 +67,11 @@ namespace UCP
                         {
                             0x60,                                     // pushad
                             0xE8, new BinRefTo("_rand", true),        // call _rand()
-                            0x3D, 0x00, 0x50, 0x00, 0x00,             // cmp eax,5000
+                            0x3D, 0xE8, 0x03, 0x00, 0x00,             // cmp eax,#1000
                             0x77, 0x2B,                               // ja 2B
                             0x90, 0x90, 0x90, 0x90,                   // nops
                             0xE8, new BinRefTo("_rand", true),        // call _rand()
-                            0xBE, 0x00, 0x10, 0x00, 0x00,             // mov esi, 1000
+                            0xBE, 0x80, 0x0C, 0x00, 0x00,             // mov esi,C80
                             0xF7, 0xFE,                               // idiv esi
                             0x8B, 0xDA,                               // mov ebx,edx
                             0xE8, new BinRefTo("_rand", true),        // call _rand()
@@ -71,9 +85,177 @@ namespace UCP
                             0xE8, new BinRefTo("ignite_tile", true),  // call ignite_tile()
                             0x83, 0xC4, 0x18,                         // add esp,18
                             0x61,                                     // popad
-                            0xB9, new BinRefTo("some_global", false)  // mov ecx, 0191D768
+                            0x60,                                     // pushad
+                            0xBD, 0x64, 0x00, 0x00, 0x00,             // mov ebp,64
+                            0xE8, new BinRefTo("_rand", true),        // call _rand()
+                            0xBE, 0x90, 0x01, 0x00, 0x00,             // mov esi,190
+                            0xF7, 0xFE,                               // idiv esi
+                            0x8B, 0xDA,                               // mov ebx,edx
+                            0xE8, new BinRefTo("_rand", true),        // call _rand()
+                            0xF7, 0xFE,                               // idiv esi
+                            0x8D, 0x04, 0x52,                         // lea eax,[edx+edx*02]
+                            0x8B, 0x04, 0x85, new BinRefTo("global1_tileindices", false), // mov eax,[eax*04+global1_tileindices]
+                            0x01, 0xD8,                               // add eax,ebx
+                            0xB9, new BinRefTo("global2_tilearray", false), // mov ecx,global2_tilearray
+                            0x83, 0xBC, 0x81, 0x60, 0x51, 0x16, 0x00, 0x01, // cmp [ecx+eax*04+00165160],01
+                            0x75, 0x30,                               // jne 30
+                            0x90, 0x90, 0x90, 0x90,                   // nops
+                            0xC1, 0xE2, 0x03,                         // shl edx,03
+                            0xC1, 0xE3, 0x03,                         // shl ebx,03
+                            0xB9, new BinRefTo("global3_spawnparticle", false), // mov ecx,global3_spawnparticle
+                            0x6A, 0x00,                               // push 00
+                            0x6A, 0x20,                               // push 20
+                            0x6A, 0x15,                               // push 15
+                            0x52,                                     // push edx
+                            0x53,                                     // push ebx
+                            0x6A, 0x15,                               // push 15
+                            0x52,                                     // push edx
+                            0x53,                                     // push ebx
+                            0x6A, 0x00,                               // push 00
+                            0x6A, 0x00,                               // push 00
+                            0x6A, 0x05,                               // push 05
+                            0xE8, new BinRefTo("spawnparticle",true), // call spawnparticle()
+                            0xB9, new BinRefTo("global4_emitparticle",false), // mov ecx,global4_emitparticle
+                            0xE8, new BinRefTo("emitparticle",true),  // call emitparticle()
+                            0x4D,                                     // dec ebp
+                            0x83, 0xFD, 0x00,                         // cmp ebp,00
+                            0x75, 0x9A,                               // jne -64
+                            0x61,                                     // popad
+                            0xB9, new BinRefTo("some_global", false)  // mov ecx, 0191D768 - ORIGINALCODE
                         }
                     },
+                }
+            },
+
+            new Change("o_fire_tweak", ChangeType.Other, true)
+            {
+                new DefaultHeader("o_fire_tweak")
+                {
+                    new BinaryEdit("o_rand_func")
+                    {
+                        new BinAddress("_rand", 1, true)
+                    },
+
+                    new BinaryEdit("o_fire_damage_nerf") // 516E51
+                    {
+                        new BinHook(9)
+                        {
+                            0x60,
+                            0xE8, new BinRefTo("_rand", true),
+                            0xBE, 0x64, 0x00, 0x00, 0x00,
+                            0xF7, 0xFE,
+                            0x83, 0xFA, 0x32, 
+                            0x7C, 0x0F, 
+                            0x90, 0x90, 0x90, 0x90, 
+                            0x61, 
+                            0x83, 0x7C, 0x24,  0x38, 0x01, 
+                            0xEB, 0x0D, 
+                            0x90, 0x90, 0x90, 
+                            0x61, 
+                            0x2B, 0x44, 0x24, 0x2C, 
+                            0x83, 0x7C, 0x24, 0x38, 0x01
+                        }
+                    },
+
+                    new BinaryEdit("o_water_nerf") // 00410a01
+                    {
+                        new BinAddress("water_func_ret", 10, true),
+
+                        new BinHook(14)
+                        {
+                            0x83, 0xBC, 0x30, 0xD2, 0x02, 0x00, 0x00, 0x00, 
+                            0x0F, 0x84, new BinRefTo("water_func_ret", true), 
+                            0x81, 0xBC, 0x30, 0xD2, 0x02, 0x00, 0x00, 0xFA, 0x00, 0x00, 0x00, 
+                            0x7C, 0x1F, 
+                            0x90, 0x90, 0x90, 0x90, 
+                            0x53,
+                            0x8B, 0x9C, 0x30, 0xD2, 0x02, 0x00, 0x00,
+                            0x81, 0xEB, 0xFA, 0x00, 0x00, 0x00, 
+                            0x89, 0x9C, 0x30, 0xD2, 0x02, 0x00, 0x00, 
+                            0x5B, 
+                            0xE9, new BinRefTo("water_func_ret", true),
+                        }
+                    }
+                }
+            },
+
+            new Change("o_slave_buff", ChangeType.Other, true)
+            {
+                new DefaultHeader("o_slave_buff")
+                {
+                    new BinaryEdit("o_ignite_tile_func")
+                    {
+                        new BinAddress("ignite_tile", 4, true)
+                    },
+
+                    new BinaryEdit("o_fire_damage_unit") // 00532483
+                    {
+                        new BinLabel("fire_damage_unit_ret"),
+
+                        new BinSkip(9),
+
+                        new BinHook(7)
+                        {
+                            0x0F, 0xB7, 0xBE, 0xA2, 0x06, 0x00, 0x00, 
+                            0x83, 0xFF, 0x47,
+                            0x75, 0x0B, 
+                            0x0F, 0x1F, 0x40, 0x00, 
+                            0x5F, 
+                            0x5D, 
+                            0xE9, new BinRefTo("fire_damage_unit_ret", true)
+                        }
+                    },
+
+                    new BinaryEdit("o_unit_action") // 0057a2a8
+                    {
+                        new BinHook(9)
+                        {
+                            0x0F, 0xBF, 0x94, 0x31, 0xD2, 0x08, 0x00, 0x00, 
+                            0x83, 0xBC, 0x31, 0xA2, 0x06, 0x00, 0x00, 0x47, 
+                            0x74, 0x0A, 
+                            0x0F, 0x1F, 0x40, 0x00, 
+                            0x52, 
+                            0xEB, 0x05, 
+                            0x90, 0x90, 0x90, 
+                            0x6A, 0x08
+                        }
+                    },
+
+                    new BinaryEdit("o_unit_attack") // 0053123D
+                    {
+                        new BinHook(8)
+                        {
+                            0x60, 
+                            0x83, 0xBC, 0x3E, 0xA2, 0x06, 0x00, 0x00, 0x47,
+                            0x75, 0x2B, 
+                            0x90, 0x90, 0x90, 0x90, 
+                            0x66, 0x8B, 0x94, 0x35, 0xCA, 0x06, 0x00, 0x00, 
+                            0x66, 0x8B, 0x84, 0x35, 0xCC, 0x06, 0x00, 0x00, 
+                            0x6A, 0x00, 
+                            0x6A, 0x02, 
+                            0x6A, 0x00, 
+                            0x50, 0x52, 
+                            0x6A, 0x00,
+                            0xE8, new BinRefTo("ignite_tile", true),
+                            0x83, 0xC4, 0x18, 
+                            0xEB, 0x33, 
+                            0x90, 0x90, 0x90, 
+                            0x83, 0xBC, 0x35, 0xA2, 0x06, 0x00, 0x00, 0x47, 
+                            0x75, 0x26, 
+                            0x90, 0x90, 0x90, 0x90,
+                            0x66, 0x8B, 0x94, 0x3E, 0xCA, 0x06, 0x00, 0x00, 
+                            0x66, 0x8B, 0x84, 0x3E, 0xCC, 0x06, 0x00, 0x00, 
+                            0x6A, 0x00,
+                            0x6A, 0x02, 
+                            0x6A, 0x00, 
+                            0x50, 0x52, 
+                            0x6A, 0x00, 
+                            0xE8, new BinRefTo("ignite_tile", true),
+                            0x83, 0xC4, 0x18, 
+                            0x61, 
+                            0x0F, 0xBF, 0x84, 0x3E, 0xEC, 0x08, 0x00, 0x00
+                        }
+                    }
                 }
             },
 
